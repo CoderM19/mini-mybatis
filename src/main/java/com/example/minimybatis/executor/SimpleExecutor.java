@@ -4,6 +4,9 @@ import com.example.minimybatis.mapping.MappedStatement;
 import com.example.minimybatis.binding.ParameterHandler;
 import com.example.minimybatis.parser.SqlParser;
 import com.example.minimybatis.session.Configuration;
+import com.example.minimybatis.transaction.TransactionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
@@ -15,8 +18,10 @@ import java.util.Map;
 
 public class SimpleExecutor extends AbstractExecutor{
 
-    public SimpleExecutor(Configuration configuration) {
-        super(configuration);
+    private static final Logger log = LoggerFactory.getLogger(SimpleExecutor.class);
+
+    public SimpleExecutor(Configuration configuration, TransactionManager transactionManager) {
+        super(configuration,transactionManager);
     }
 
     @Override
@@ -31,7 +36,7 @@ public class SimpleExecutor extends AbstractExecutor{
             SqlParser.ParsedSql parsedSql = sqlParser.parse(originalSql);
             // 2. 准备 SQL 语句
             String sql = parsedSql.getSql();
-            ps = connection.prepareStatement(sql);
+            ps = transactionManager.getConnection().prepareStatement(sql);
             // 3. 设置参数 - 支持多种参数类型
             setParameters(ps, parameter, parsedSql.getParameterNames(),parsedSql.getParameterPositions());
             // 4. 执行查询
@@ -69,14 +74,12 @@ public class SimpleExecutor extends AbstractExecutor{
             String originalSql = ms.getSql();
             SqlParser.ParsedSql parsedSql = sqlParser.parse(originalSql);
             String sql = parsedSql.getSql();
-            if (!connection.getAutoCommit()){
-                connection.setAutoCommit(false);
-            }
-            ps = connection.prepareStatement(sql);
+            ps = transactionManager.getConnection().prepareStatement(sql);
             setParameters(ps, parameter, parsedSql.getParameterNames(), parsedSql.getParameterPositions());
             return ps.executeUpdate();
         }catch (Exception e){
-            throw new RuntimeException("执行 SQL 错误");
+            log.error("执行 SQL 错误",e);
+            throw new RuntimeException("执行 SQL 错误",e);
         }finally {
             closeResource(ps, null);
         }
@@ -133,6 +136,10 @@ public class SimpleExecutor extends AbstractExecutor{
      * 设置单个参数值，支持多种类型
      */
     private void setParameterValue(PreparedStatement ps, int position, Object value) throws Exception {
+        if (value == null) {
+            ps.setNull(position, java.sql.Types.VARCHAR);
+            return;
+        }
         if (value instanceof Integer) {
             ps.setInt(position, (Integer) value);
         } else if (value instanceof Long) {
@@ -150,7 +157,7 @@ public class SimpleExecutor extends AbstractExecutor{
         } else if (value instanceof java.sql.Timestamp) {
             ps.setTimestamp(position, (java.sql.Timestamp) value);
         } else {
-            ps.setString(position, value.toString());
+            ps.setString(position, value == null ? null : value.toString());
         }
     }
 

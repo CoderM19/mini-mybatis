@@ -5,6 +5,7 @@ import com.example.minimybatis.executor.SimpleExecutor;
 import com.example.minimybatis.mapping.MappedStatement;
 import com.example.minimybatis.plugin.Interceptor;
 import com.example.minimybatis.plugin.InterceptorChain;
+import com.example.minimybatis.transaction.TransactionManager;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -26,9 +27,15 @@ public class Configuration {
 
     private Properties variables;
 
+    private TransactionManager transactionManager;
+
+    private boolean defaultAutoCommit = false;
+
     public Configuration() {
         interceptorChain = new InterceptorChain();
         variables = new Properties();
+        transactionManager = new TransactionManager(this);
+        transactionManager.setDefaultAutoCommit(defaultAutoCommit);
     }
 
     public InterceptorChain getInterceptorChain() {
@@ -76,7 +83,7 @@ public class Configuration {
 
 
     public Executor newExecutor() {
-        Executor executor = new SimpleExecutor(this);
+        Executor executor = new SimpleExecutor(this, transactionManager);
         return (Executor) interceptorChain.pluginAll(executor);
     }
 
@@ -100,5 +107,20 @@ public class Configuration {
 
     public void setVariables(String key ,String value) {
         variables.setProperty(key, value);
+    }
+
+    public TransactionManager getTransactionManager() {
+        return transactionManager;
+    }
+
+    public boolean isDefaultAutoCommit() {
+        return defaultAutoCommit;
+    }
+
+    public void setDefaultAutoCommit(boolean defaultAutoCommit) {
+        this.defaultAutoCommit = defaultAutoCommit;
+        if (transactionManager != null) {
+            transactionManager.setDefaultAutoCommit(defaultAutoCommit);
+        }
     }
 }

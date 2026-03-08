@@ -39,4 +39,8 @@ public interface Executor {
      *  关闭连接
      */
     void close();
+
+    void beginTransaction();
+
+    void beginTransaction(boolean autoCommit);
 }

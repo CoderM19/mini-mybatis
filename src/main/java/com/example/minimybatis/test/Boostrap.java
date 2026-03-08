@@ -26,18 +26,37 @@ public class Boostrap {
         for (MappedStatement ms : mappedStatements) {
             configuration.addMappedStatement(ms);
         }
-
         SqlSession sqlSession = new SqlSession(configuration);
 
-        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+        try {
+            sqlSession.beginTransaction();
 
-        User user = userMapper.getUserById(1);
-        System.out.println(user);
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
 
-        User insertUser = new User();
-        insertUser.setUsername("new");
-        insertUser.setEmail("new@example.com");
-        userMapper.insertUser(insertUser);
+            User user = userMapper.getUserById(1);
+            System.out.println("查询结果：" + user);
+
+            if (user != null) {
+                user.setUsername("Updated Username");
+                int updated = userMapper.updateUser(user);
+                System.out.println("更新行数：" + updated);
+
+                User newUser = new User();
+                newUser.setUsername("Test User");
+                newUser.setEmail("test@example.com");
+                int inserted = userMapper.insertUser(newUser);
+                System.out.println("插入行数：" + inserted);
+            }
+
+            sqlSession.commit();
+            System.out.println("事务提交成功！");
+        } catch (Exception e) {
+            sqlSession.rollback();
+            System.out.println("事务已回滚：" + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            sqlSession.close();
+        }
 
 
 

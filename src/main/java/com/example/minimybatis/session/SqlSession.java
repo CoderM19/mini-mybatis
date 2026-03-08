@@ -1,6 +1,7 @@
 package com.example.minimybatis.session;
 
 import com.example.minimybatis.binding.MapperProxy;
+import com.example.minimybatis.executor.AbstractExecutor;
 import com.example.minimybatis.executor.Executor;
 import com.example.minimybatis.executor.SimpleExecutor;
 import com.example.minimybatis.mapping.MappedStatement;
@@ -16,6 +17,12 @@ public class SqlSession {
 
     public SqlSession(Configuration configuration) {
         this.configuration = configuration;
+        this.executor = configuration.newExecutor();
+    }
+
+    public SqlSession (Configuration configuration, boolean autoCommit) {
+        this.configuration = configuration;
+        configuration.setDefaultAutoCommit(autoCommit);
         this.executor = configuration.newExecutor();
     }
 
@@ -72,5 +79,21 @@ public class SqlSession {
 
     public Configuration getConfiguration() {
         return configuration;
+    }
+
+    public void beginTransaction() {
+       executor.beginTransaction();
+    }
+
+    public void beginTransaction(boolean autoCommit) {
+        ((AbstractExecutor) executor).beginTransaction(autoCommit);
+    }
+
+    public boolean isAutoCommit() {
+        return configuration.isDefaultAutoCommit();
+    }
+
+    public void setAutoCommit(boolean autoCommit) {
+        configuration.setDefaultAutoCommit(autoCommit);
     }
 }

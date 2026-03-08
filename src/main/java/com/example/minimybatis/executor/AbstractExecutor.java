@@ -2,6 +2,7 @@ package com.example.minimybatis.executor;
 
 import com.example.minimybatis.mapping.MappedStatement;
 import com.example.minimybatis.session.Configuration;
+import com.example.minimybatis.transaction.TransactionManager;
 
 import java.sql.Connection;
 import java.util.List;
@@ -17,8 +18,11 @@ public abstract class AbstractExecutor implements Executor{
 
     private boolean autoCommit = false;
 
-    public AbstractExecutor(Configuration configuration) {
+    protected TransactionManager transactionManager;
+
+    public AbstractExecutor(Configuration configuration, TransactionManager transactionManager) {
         this.configuration = configuration;
+        this.transactionManager = transactionManager;
     }
 
 
@@ -47,12 +51,14 @@ public abstract class AbstractExecutor implements Executor{
     @Override
     public <E> List<E> query(MappedStatement ms, Object[] parameter) {
         try {
-            this.connection = configuration.getConn();
+            this.connection = transactionManager.getConnection();
             return doQuery(ms, parameter);
         }catch (Exception e){
             log.info("获取连接失败");
         }finally {
-            closeConnection();
+            if (autoCommit){
+                closeConnection();
+            }
         }
         return null;
     }
@@ -60,7 +66,7 @@ public abstract class AbstractExecutor implements Executor{
     @Override
     public int update(MappedStatement ms, Object[] parameter) {
         try {
-            this.connection = configuration.getConn();
+            this.connection = transactionManager.getConnection();
             int result = doUpdate(ms, parameter);
             if (autoCommit){
              commit();
@@ -80,9 +86,7 @@ public abstract class AbstractExecutor implements Executor{
     @Override
     public void commit() {
       try {
-          if (connection != null && !connection.getAutoCommit()){
-             connection.commit();
-          }
+         transactionManager.commit();
       }catch (Exception e){
           throw new RuntimeException("提交失败");
       }
@@ -91,9 +95,7 @@ public abstract class AbstractExecutor implements Executor{
     @Override
     public void rollback() {
         try {
-            if (connection != null && !connection.getAutoCommit()){
-                connection.rollback();
-            }
+           transactionManager.rollback();
         }catch (Exception e){
             throw new RuntimeException("回滚失败");
         }
@@ -109,6 +111,28 @@ public abstract class AbstractExecutor implements Executor{
 
     @Override
     public void close() {
-     closeConnection();
+        try {
+            transactionManager.close();
+        } catch (Exception e) {
+            log.info("关闭事务失败");
+        }
+    }
+
+    @Override
+    public void beginTransaction() {
+        try {
+            transactionManager.beginTransaction();
+        } catch (Exception e) {
+            throw new RuntimeException("开始事务失败", e);
+        }
+    }
+
+    @Override
+    public void beginTransaction(boolean autoCommit) {
+        try {
+            transactionManager.beginTransaction(autoCommit);
+        } catch (Exception e) {
+            throw new RuntimeException("开始事务失败", e);
+        }
     }
 }
