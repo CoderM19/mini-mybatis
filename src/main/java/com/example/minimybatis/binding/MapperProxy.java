@@ -20,17 +20,17 @@ public class MapperProxy implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (Object.class.equals(method.getDeclaringClass())){
+        if (Object.class.equals(method.getDeclaringClass())) {
             return method.invoke(this, args);
         }
-
         String statementId = mapperInterface.getName() + "." + method.getName();
-
         Class<?> resultType = method.getReturnType();
-
-        if (Collection.class.isAssignableFrom(resultType)){
+        if (resultType == void.class || resultType == int.class || resultType == Integer.class ||
+                resultType == long.class || resultType == Long.class) {
+            return sqlSession.update(statementId, args);
+        } else if (Collection.class.isAssignableFrom(resultType)) {
             return sqlSession.selectList(statementId, args);
-        }else {
+        } else {
             return sqlSession.selectOne(statementId, args);
         }
     }

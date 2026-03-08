@@ -1,14 +1,49 @@
 package com.example.minimybatis.test;
 
+import com.example.minimybatis.builder.AnnotationMapperBuilder;
 import com.example.minimybatis.interceptor.LogInterceptor;
 import com.example.minimybatis.mapping.MappedStatement;
 import com.example.minimybatis.session.Configuration;
 import com.example.minimybatis.session.SqlSession;
+import com.example.minimybatis.session.SqlSessionFactory;
+import com.example.minimybatis.session.SqlSessionFactoryBuilder;
+
+import java.util.List;
 
 public class Boostrap {
 
+    public static void main(String[] args) {
+        Configuration configuration = new Configuration();
+        configuration.setDriver("com.mysql.cj.jdbc.Driver");
+        configuration.setUrl("jdbc:mysql://localhost:3306/test");
+        configuration.setUsername("root");
+        configuration.setPassword("MESSIted@123");
+        configuration.addInterceptor(new LogInterceptor());
 
-    static void main() {
+        AnnotationMapperBuilder builder = new AnnotationMapperBuilder(UserMapper.class);
+        List<MappedStatement> mappedStatements = builder.parseMappedStatements();
+
+        for (MappedStatement ms : mappedStatements) {
+            configuration.addMappedStatement(ms);
+        }
+
+        SqlSession sqlSession = new SqlSession(configuration);
+
+        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+
+        User user = userMapper.getUserById(1);
+        System.out.println(user);
+
+        User insertUser = new User();
+        insertUser.setUsername("new");
+        insertUser.setEmail("new@example.com");
+        userMapper.insertUser(insertUser);
+
+
+
+    }
+
+    static void main1() {
 // 1. 初始化配置（模拟从XML读取）
         Configuration configuration = new Configuration();
         configuration.setDriver("com.mysql.cj.jdbc.Driver");

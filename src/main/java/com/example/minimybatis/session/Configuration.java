@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class Configuration {
 
@@ -23,8 +24,11 @@ public class Configuration {
 
     private InterceptorChain interceptorChain;
 
+    private Properties variables;
+
     public Configuration() {
         interceptorChain = new InterceptorChain();
+        variables = new Properties();
     }
 
     public InterceptorChain getInterceptorChain() {
@@ -88,5 +92,13 @@ public class Configuration {
 
     public MappedStatement getMappedStatement(String id) {
         return mappedStatements.get(id);
+    }
+
+    public String getVariable(String key) {
+      return variables.getProperty(key);
+    }
+
+    public void setVariables(String key ,String value) {
+        variables.setProperty(key, value);
     }
 }

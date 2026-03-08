@@ -11,6 +11,9 @@ public class MappedStatement {
     private Class<?> resultType;
 
     private List<Class<?>> parameterTypes;
+    
+    // 参数映射列表，支持命名参数
+    private List<ParameterMapping> parameterMappings;
 
     public String getId() {
         return id;
@@ -42,5 +45,17 @@ public class MappedStatement {
 
     public void setParameterTypes(List<Class<?>> parameterTypes) {
         this.parameterTypes = parameterTypes;
+    }
+
+    public List<ParameterMapping> getParameterMappings() {
+        return parameterMappings;
+    }
+
+    public void setParameterMappings(List<ParameterMapping> parameterMappings) {
+        this.parameterMappings = parameterMappings;
+    }
+
+    public void setP() {
+
     }
 }

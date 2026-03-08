@@ -15,6 +15,8 @@ public abstract class AbstractExecutor implements Executor{
 
     protected Connection connection;
 
+    private boolean autoCommit = false;
+
     public AbstractExecutor(Configuration configuration) {
         this.configuration = configuration;
     }
@@ -28,6 +30,8 @@ public abstract class AbstractExecutor implements Executor{
      * @param <E> 结果类型泛型
      */
     protected abstract <E> List<E> doQuery(MappedStatement ms, Object[] parameter);
+
+    protected abstract int doUpdate(MappedStatement ms, Object[] parameter);
 
 
     protected void closeConnection() {
@@ -55,17 +59,52 @@ public abstract class AbstractExecutor implements Executor{
 
     @Override
     public int update(MappedStatement ms, Object[] parameter) {
+        try {
+            this.connection = configuration.getConn();
+            int result = doUpdate(ms, parameter);
+            if (autoCommit){
+             commit();
+            }
+            return result;
+        }catch (Exception e){
+            log.info("获取连接失败");
+            rollback();
+        }finally {
+            if (autoCommit){
+                closeConnection();
+            }
+        }
         return 0;
     }
 
     @Override
     public void commit() {
-
+      try {
+          if (connection != null && !connection.getAutoCommit()){
+             connection.commit();
+          }
+      }catch (Exception e){
+          throw new RuntimeException("提交失败");
+      }
     }
 
     @Override
     public void rollback() {
+        try {
+            if (connection != null && !connection.getAutoCommit()){
+                connection.rollback();
+            }
+        }catch (Exception e){
+            throw new RuntimeException("回滚失败");
+        }
+    }
 
+    public void setAutoCommit(boolean autoCommit) {
+        this.autoCommit = autoCommit;
+    }
+
+    public boolean isAutoCommit() {
+        return autoCommit;
     }
 
     @Override

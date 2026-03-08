@@ -44,5 +44,33 @@ public class SqlSession {
        return null;
     }
 
+    public int update(String statement, Object[] parameter) {
+        MappedStatement ms = configuration.getMappedStatement(statement);
+        return executor.update(ms, parameter);
+    }
+    public int insert(String statement, Object... parameter) {
+        MappedStatement ms = configuration.getMappedStatement(statement);
+        return executor.update(ms, parameter);
+    }
 
+    public int delete(String statement, Object... parameter) {
+        MappedStatement ms = configuration.getMappedStatement(statement);
+        return executor.update(ms, parameter);
+    }
+
+    public void commit() {
+        executor.commit();
+    }
+
+    public void rollback() {
+        executor.rollback();
+    }
+
+    public void close() {
+        executor.close();
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
 }

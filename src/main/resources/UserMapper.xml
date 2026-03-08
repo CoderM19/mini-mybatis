@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.minimybatis.test.UserMapper">
+    
+    <select id="getUserById" resultType="com.example.minimybatis.test.User">
+        select * from user where id = #{id}
+    </select>
+    
+    <select id="getAllUsers" resultType="com.example.minimybatis.test.User">
+        select * from user
+    </select>
+    
+    <insert id="insertUser" parameterType="com.example.minimybatis.test.User">
+        insert into user(username, email) values(#{username}, #{email})
+    </insert>
+    
+    <update id="updateUser" parameterType="com.example.minimybatis.test.User">
+        update user set username = #{username}, email = #{email} where id = #{id}
+    </update>
+    
+    <delete id="deleteUser" parameterType="java.lang.Integer">
+        delete from user where id = #{id}
+    </delete>
+    
+</mapper>
